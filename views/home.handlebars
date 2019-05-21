@@ -1,0 +1,115 @@
+<link href="https://fonts.googleapis.com/css?family=Catamaran:100|Squada+One" rel="stylesheet">
+
+<div class="appwrapper">
+  <!--  navbar  -->
+  <div id="navbar">
+    <div class="logo"> <a href="/">MoodApp</a></div>
+    <div class="dropdown" onclick="dropDown()">
+        <div class="menu"></div>
+        <div class="menu"></div>
+        <div class="menu"></div>
+      <div class="dropdown-content" id="dropdown-content">
+        <a href="/"> Home </a>
+        <a href="/api/user/profile"> Profile </a>
+        <a href="/api/user/calendar"> Calendar </a>
+      </div>
+    </div>
+  </div>
+{{!-- end of navbar --}}
+
+<form action="/api/user/create" method="post" onsubmit="return validateForm()" name="moodForm">
+    <p>Select a mood from the drop-down:</p>
+	<select name="moodSelect" id="mood-select">
+    {{#each results}}
+        <option value={{ moodID }}:{{ color }}>{{ mood }}</option>	
+    {{/each}}
+	</select>
+	<div class="inputs"><p>StartTime:</p> <input type="datetime-local" step="3600" name="startTime"></div>
+	<div class="inputs"><p>Duration:</p> <input type="number" name="duration" min="1" max="5"></div>
+	
+	<input type="submit" id="submit" value="Submit Mood" >
+  {{!-- <p id="success">Mood submited!</p> --}}
+  <p id="submit-failed">Complete all form fields before submiting</p>
+  <p id="errorMessage" style="text-align: center;"> </p>
+</form>
+
+<hr>
+<button id="generate" onclick="vizCalculation()">Generate Mood Viz</button>
+<div id="mood-viz"></div>
+
+</div>
+
+<script>
+//form validation
+function validateForm() {
+  var time = document.forms["moodForm"]["startTime"].value;
+  var duration = document.forms["moodForm"]["duration"].value;
+  if(duration == "" || time == "") {
+    var failedMessage = document.getElementById("submit-failed");
+    failedMessage.classList.toggle("show");
+    return false;
+  } 
+}
+//the viz window
+var vizWindow = document.getElementById("mood-viz");
+
+if ( {{errorFlag}}) {
+  var errorMessageVar = document.getElementById("errorMessage");
+  errorMessageVar.style.color="red";
+  errorMessageVar.innerHTML = "Your date is illegal!";
+} else {
+  if (! {{firstSubmit}}){
+    var errorMessageVar = document.getElementById("errorMessage");
+    errorMessageVar.style.color="green";
+    errorMessageVar.innerHTML = "Your mood was submitted!";
+  }
+}
+
+// calculate area for each color in the viz window
+function vizCalculation() {
+  // Delete children if there are any
+  while (vizWindow.hasChildNodes()) {   
+    vizWindow.removeChild(vizWindow.firstChild);
+  }
+
+  //number of selections user made
+  nColors = 0;
+  {{#each colorInfo}}
+	nColors += {{this.count}};
+  {{/each}}
+
+  // calculate area size for each mood square
+  aColor = Math.floor(200 / nColors);
+  
+  //create divs to contain user moods
+  {{#each colorInfo}}
+    for (let i = 0; i < {{this.count}}; i++){
+		var colorSquares = document.createElement('div');
+		colorSquares.className = "moods";
+		
+		//randomized position of mood divs
+		var posx = (Math.random() * (320 - aColor)).toFixed();
+		var posy = (Math.random() * (260 - aColor)).toFixed();
+   
+		// style newly created divs
+		var color = "{{this.color}}";
+		colorSquares.style.backgroundColor = color;
+		colorSquares.style.width  = aColor + "%";
+		colorSquares.style.height = aColor + "%";
+		colorSquares.style.left = posx + "px";
+		colorSquares.style.top = posy + "px";
+
+		vizWindow.appendChild(colorSquares);
+	}
+  {{/each}}
+}
+
+function dropDown() {
+  var menuLinks = document.getElementById("dropdown-content");
+  menuLinks.classList.toggle("drop");
+
+  var navbar = document.getElementById("navbar");
+  navbar.classList.toggle("navbar-drop");
+}
+</script>
+
